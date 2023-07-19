@@ -18,32 +18,39 @@ enum Role {
   admin
 }
 
+enum Gender {
+  male
+  female
+  other
+}
+
 model Account {
-  accountID String     @id @default(uuid())
-  account   String     @unique
-  password  String
-  createAt  DateTime   @default(now())
-  updateAt  DateTime   @default(now())
-  UserInfo  UserInfo[]
+  accountID  String   @id @default(uuid())
+  account    String   @unique
+  password   String
+  createAt   DateTime @default(now())
+  updateAt   DateTime @default(now())
+  UserInfo   UserInfo @relation(fields: [userInfoID], references: [userInfoID])
+  userInfoID String   @unique
 }
 
 model UserInfo {
   //property
-  userID         String     @id @default(uuid())
-  firstName      String
-  lastName       String
+  userInfoID     String     @id @default(uuid())
+  firstName      String?
+  lastName       String?
+  gender         Gender?
   email          String?
   phoneNumber    String?
-  country        String
-  address        String
+  country        String?
+  address        String?
   role           Role       @default(user)
   //foreign key
   Posts          Post[]
   Document       Document[] @relation("user")
   Comment        Comment[]
   Star           Star[]
-  Account        Account    @relation(fields: [accountID], references: [accountID])
-  accountID      String
+  Account        Account?
   MentorClass    Class?     @relation("mentor", fields: [mentorClassID], references: [classID])
   mentorClassID  String?
   studentClass   Class?     @relation("student", fields: [studentClassID], references: [classID])
@@ -58,29 +65,25 @@ model UserInfo {
 
 //ANCHOR - access
 model Image {
-  imageID            String    @id @default(uuid())
-  post               Post      @relation(fields: [postID], references: [postID])
-  postID             String
-  imageUrl           String
-  Document           Document? @relation(fields: [documentDocumentID], references: [documentID])
-  documentDocumentID String?
-  createAt           DateTime  @default(now())
-  updateAt           DateTime  @default(now())
-  QAPost             QAPost?   @relation(fields: [qAPostQapostID], references: [qapostID])
-  qAPostQapostID     String?
+  imageID  String   @id @default(uuid())
+  post     Post     @relation(fields: [postID], references: [postID])
+  postID   String
+  imageUrl String
+  createAt DateTime @default(now())
+  updateAt DateTime @default(now())
+  QAPost   QAPost?  @relation(fields: [qAPostID], references: [qapostID])
+  qAPostID String?
 }
 
 model Video {
-  videoID            String    @id @default(uuid())
-  post               Post      @relation(fields: [postID], references: [postID])
-  postID             String
-  video_url          String
-  Document           Document? @relation(fields: [documentDocumentID], references: [documentID])
-  documentDocumentID String?
-  createAt           DateTime  @default(now())
-  updateAt           DateTime  @default(now())
-  QAPost             QAPost?   @relation(fields: [qAPostQapostID], references: [qapostID])
-  qAPostQapostID     String?
+  videoID   String   @id @default(uuid())
+  post      Post     @relation(fields: [postID], references: [postID])
+  postID    String
+  video_url String
+  createAt  DateTime @default(now())
+  updateAt  DateTime @default(now())
+  QAPost    QAPost?  @relation(fields: [qAPostID], references: [qapostID])
+  qAPostID  String?
 }
 
 //ANCHOR - learning category
@@ -92,8 +95,7 @@ model LearningCategory {
   Course                      Course[]
   Document                    Document[]
   Post                        Post[]
-  QAPost                      QAPost?    @relation(fields: [qAPostQapostID], references: [qapostID])
-  qAPostQapostID              String?
+  QAPost                      QAPost[]
 }
 
 //ANCHOR - post
@@ -102,7 +104,7 @@ model Post {
   postID        String             @id @default(uuid())
   title         String
   content       String
-  userInfo      UserInfo?          @relation(fields: [userInfoID], references: [userID])
+  userInfo      UserInfo?          @relation(fields: [userInfoID], references: [userInfoID])
   userInfoID    String?
   category      LearningCategory[]
   like          Decimal            @default(0)
@@ -128,7 +130,7 @@ model Star {
   starID     String    @id @default(uuid())
   userInfoID String
   point      Decimal
-  user       UserInfo  @relation(fields: [userInfoID], references: [userID])
+  user       UserInfo  @relation(fields: [userInfoID], references: [userInfoID])
   Post       Post      @relation(fields: [postID], references: [postID])
   postID     String
   Document   Document? @relation(fields: [documentID], references: [documentID])
@@ -142,17 +144,17 @@ model Star {
 }
 
 model Comment {
-  commentID      String   @id @default(uuid())
-  userInfo       UserInfo @relation(fields: [userInfoID], references: [userID])
-  userInfoID     String
-  content        String
-  like           Decimal
-  Post           Post?    @relation(fields: [postID], references: [postID])
-  postID         String?
-  QAPost         QAPost?  @relation(fields: [qAPostQapostID], references: [qapostID])
-  qAPostQapostID String?
-  createAt       DateTime @default(now())
-  updateAt       DateTime @default(now())
+  commentID  String   @id @default(uuid())
+  userInfo   UserInfo @relation(fields: [userInfoID], references: [userInfoID])
+  userInfoID String
+  content    String
+  like       Decimal
+  Post       Post?    @relation(fields: [postID], references: [postID])
+  postID     String?
+  QAPost     QAPost?  @relation(fields: [qAPostID], references: [qapostID])
+  qAPostID   String?
+  createAt   DateTime @default(now())
+  updateAt   DateTime @default(now())
 }
 
 //ANCHOR - Q&APost
@@ -172,7 +174,7 @@ model QAPost {
   content    String
   QAType     QAType             @default(ask)
   status     QAStatus           @default(pending)
-  userInfo   UserInfo?          @relation(fields: [userInfoID], references: [userID])
+  userInfo   UserInfo?          @relation(fields: [userInfoID], references: [userInfoID])
   userInfoID String?
   category   LearningCategory[]
   comment    Comment[]
@@ -184,20 +186,20 @@ model QAPost {
 
 //ANCHOR - class
 model Class {
-  classID                        String             @id @default(uuid())
-  mentor                         UserInfo[]         @relation("mentor")
-  student                        UserInfo[]         @relation("student")
-  star                           Star[]
-  ClassStructure                 ClassStructure?
-  briefDescription               String
-  startDate                      DateTime
-  endDate                        DateTime
-  totalHours                     Float
-  classCategory                  LearningCategory[]
-  learningCategoryID             String
-  classStructureClassStructureID String
-  createAt                       DateTime           @default(now())
-  updateAt                       DateTime           @default(now())
+  classID            String             @id @default(uuid())
+  mentor             UserInfo[]         @relation("mentor")
+  student            UserInfo[]         @relation("student")
+  star               Star[]
+  ClassStructure     ClassStructure?
+  briefDescription   String
+  startDate          DateTime
+  endDate            DateTime
+  totalHours         Float
+  classCategory      LearningCategory[]
+  learningCategoryID String
+  classStructureID   String
+  createAt           DateTime           @default(now())
+  updateAt           DateTime           @default(now())
 }
 
 model ClassStructure {
@@ -212,11 +214,12 @@ model ClassStructure {
 //ANCHOR - course
 model Course {
   courseID           String             @id @default(uuid())
-  learningCategoryID String
+  name               String
+  learningCategoryID String?
   briefDescription   String
-  startDate          DateTime
-  endDate            DateTime
-  totalHours         Float
+  startDate          DateTime?
+  endDate            DateTime?
+  totalHours         Float?
   attendance         UserInfo[]
   star               Star[]
   CourseStructure    CourseStructure?
@@ -237,13 +240,11 @@ model CourseStructure {
 //ANCHOR - document
 model Document {
   documentID        String             @id @default(uuid())
-  UserInfo          UserInfo?          @relation("user", fields: [userInfoID], references: [userID])
+  UserInfo          UserInfo?          @relation("user", fields: [userInfoID], references: [userInfoID])
   userInfoID        String?
   category          LearningCategory[]
   readCount         Decimal
   star              Star[]
-  image             Image[]
-  video             Video[]
   DocumentStructure DocumentStructure?
   createAt          DateTime           @default(now())
   updateAt          DateTime           @default(now())
